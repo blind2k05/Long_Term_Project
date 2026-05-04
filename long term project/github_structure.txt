@@ -1,0 +1,23 @@
+vault/
+├── data/
+│   ├── raw/
+│   │   ├── journal/
+│   │   ├── school_notes/
+│   │   ├── coding_notes/
+│   │   └── internship_meetings/
+│   └── processed/
+│       └── cleaned_docs.jsonl
+│
+├── chroma_db/
+│   └── (persistent ChromaDB files)
+│
+├── ingest.py
+├── search.py
+├── config.py
+│
+├── chunking_lab.md
+├── failure_journal.md
+├── README.md
+│
+├── requirements.txt
+└── .gitignore
