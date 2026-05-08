@@ -1,4 +1,0 @@
-chromadb
-sentence-transformers
-python-dotenv
-langchain-text-splitters
