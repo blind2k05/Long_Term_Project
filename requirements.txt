@@ -1,0 +1,18 @@
+# --- Database & Vector Space ---
+chromadb
+
+# --- Text Processing & Chunking ---
+langchain-text-splitters
+PyPDF2
+
+# --- Embedding Models (HuggingFace/BGE-M3) ---
+sentence-transformers
+
+# --- LLM Client ---
+ollama
+
+# --- User Interface (Web App) ---
+streamlit
+
+# --- Environment & Utilities ---
+python-dotenv

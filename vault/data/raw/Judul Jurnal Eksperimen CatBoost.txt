@@ -1,0 +1,11 @@
+Judul: Jurnal Eksperimen CatBoost
+Tanggal: 5 Mei 2026
+
+Catatan Eksperimen:
+Hari ini saya menguji coba algoritma CatBoost untuk memprediksi probabilitas pelanggan berhenti berlangganan. Keunggulan utama CatBoost yang saya temukan hari ini adalah ia bisa menangani fitur kategorikal secara otomatis tanpa perlu melakukan One-Hot Encoding terlebih dahulu.
+
+Kendala yang dihadapi: 
+Proses training memakan waktu sangat lama, mencapai 45 menit. Setelah dicek, ternyata parameter "depth" diatur terlalu tinggi, yaitu pada angka 10.
+
+Solusi untuk besok: 
+Saya akan mencoba menurunkan parameter "depth" menjadi 6 dan mengubah nilai "learning rate" menjadi 0.05 agar proses belajar model menjadi lebih cepat dan optimal.

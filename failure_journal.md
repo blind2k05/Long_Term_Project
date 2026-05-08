@@ -1,0 +1,12 @@
+**Issue Explanation:**
+Saat menjalankan `search.py` dan menanyakan informasi yang secara fisik jelas-jelas ada di dalam catatan (seperti materi evaluasi XGBoost, Core Keeper, atau makalah Reinforcement Learning), terminal memunculkan pesan gagal: *"AI: Maaf, informasi tidak ditemukan di dalam catatan"*. Padahal, file Markdown dan PDF terkait sudah diletakkan di dalam struktur folder `raw` yang benar dan proses `ingest.py` sebelumnya melaporkan sukses.
+
+**Root Cause Analysis:**
+Terdapat dua skenario utama yang memicu respons kosong ini pada sistem yang sedang berjalan:
+1.  **Vektor Database Bentrok (Model Transition):** Masalah ini muncul setelah mengganti variabel `EMBEDDING_MODEL_NAME` di file konfigurasi ke model yang berjalan sepenuhnya secara *offline*. Database ChromaDB yang lama masih menyimpan koordinat vektor (deretan angka) dari model sebelumnya. Saat model lokal yang baru mencoba membaca atau membandingkan teks dengan vektor lama tersebut, terjadi kebingungan format (*dimension/embedding mismatch*) sehingga hasil pencarian tidak mengembalikan *chunk* teks apa pun.
+2.  **Terblokir oleh Strict Threshold Filter:** Di dalam skrip `search.py`, terdapat aturan logika `if score < 0.8:`. Jika pertanyaan terlalu pendek atau menggunakan kata ganti ambigu tanpa *keyword* spesifik (contoh: *"kenapa harus pakai itu?"*), ChromaDB kesulitan menemukan kecocokan yang kuat. Alhasil, skor *L2 distance* yang dihasilkan bernilai di atas 0.8 (dianggap tidak relevan oleh sistem), sehingga variabel penampung `context_text` tetap kosong.
+
+**Fixed Treatment:**
+1.  **Database Hard Reset (Cuci Gudang):** Menghapus folder `vault/chroma_db` beserta seluruh isinya secara manual. Ini penting untuk memastikan tidak ada sisa vektor dari model lama yang tertinggal.
+2.  **Re-Ingestion Pipeline:** Menjalankan ulang `python ingest.py` dari nol agar seluruh dokumen mentah dibaca, dipotong (*chunking*), dan diubah kembali menjadi vektor matematis yang selaras menggunakan model *embedding* lokal yang baru.
+3.  **Prompt Engineering Adjustment:** Menghindari penggunaan *query* yang bersifat ambigu saat berinteraksi dengan AI. Selalu menyertakan subjek utama secara eksplisit (misalnya: *"Bagaimana cara kerja parameter scale_pos_weight pada XGBoost?"*) agar skor kemiripan ChromaDB bisa memenuhi syarat masuk di bawah batas *threshold* 0.8.

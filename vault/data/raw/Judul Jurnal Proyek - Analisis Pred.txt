@@ -1,0 +1,13 @@
+Judul: Jurnal Proyek - Analisis Prediksi Customer Churn
+Fokus: IBM Telco Dataset & XGBoost Model
+Status: Tahap Feature Engineering & Evaluasi Metrik
+
+Ringkasan Masalah:
+Hari ini saya menyelesaikan tahap pembersihan data (Data Cleaning) untuk proyek Customer Churn. Tantangan utama pada dataset IBM Telco ini adalah kelas target yang sangat tidak seimbang (imbalanced dataset), di mana jumlah pelanggan yang berhenti berlangganan (churn) jauh lebih sedikit dibandingkan yang bertahan.
+
+Solusi Teknikal:
+1. Penanganan Data Imbalanced: Daripada menggunakan teknik oversampling seperti SMOTE yang memakan banyak memori, pendekatan yang saya pilih untuk model XGBoost adalah menggunakan parameter `scale_pos_weight`. Parameter ini memaksa model untuk memberikan penalti atau perhatian ekstra pada kelas minoritas saat proses training berlangsung.
+2. Keputusan Metrik Evaluasi: Mengingat tujuan bisnis perusahaan adalah mencegah pelanggan lari ke kompetitor, metrik 'Recall' jauh lebih krusial dibandingkan 'Accuracy' atau 'Precision'. Kita harus bisa mendeteksi sebanyak mungkin pelanggan yang berpotensi churn (True Positives), meskipun risikonya kita akan salah menebak beberapa pelanggan setia sebagai pelanggan churn (False Positives).
+
+Rencana Selanjutnya:
+Melakukan hyperparameter tuning menggunakan GridSearchCV. Fokus utama adalah mencari kombinasi terbaik untuk `max_depth` (agar model tidak overfitting) dan `learning_rate` (untuk mengontrol kecepatan konvergensi).
