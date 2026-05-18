@@ -58,31 +58,32 @@ Open your terminal (or VS Code terminal) and run:
 git clone <your-repository-url>
 cd <your-repository-folder>
 pip install -r requirements.txt
+```
 **Step 3: Setup the Local AI Brain (Gemma 2B)**
 Download the offline language model into Ollama by running this command in your terminal:
-```bash
+```
 ollama pull gemma2:2b
-**Step 4: Setup the Online AI Brain (Groq API)(if you want to use better model)**
+```
+
+**Step 4: Setup the Online AI Brain (Groq API)** — OPTIONAL
+(Set this up if you want to use the better/faster Llama 3 model)
 
 Rename the env.example file to .env.
-
 Open the .env file and insert your Groq API Key:
 
+Code snippet
+```
 GROQ_API_KEY=your_actual_api_key_here
+```
 **Step 5: Run the Application**
 Launch the Streamlit Web UI by executing:
-streamlit run app.py || python -m streamlit run app.py
+```
+streamlit run app.py
+(If the command above is not recognized, use python -m streamlit run app.py)
+```
 **Step 6: Initialize the Database**
 Upon first launch, the database will be empty.
 
 Use the sidebar to upload your first document/CSV, OR
 
 Click the "🔄 Sinkronkan Data (Update)" button to ingest existing files from the vault/data/raw/ folder.
-
-Note: The system will automatically download the BGE-M3 embedding model in the background during the first ingestion. Please ensure you have an active internet connection for this initial setup.
-
-
-**Penjelasan Perubahan:**
-* Tulisan "Bash" dan "Code snippet" yang sebelumnya ikut tersalin sudah saya hapus dan ganti dengan *backticks* (` ```bash ` dan ` ```env `) agar menjadi kotak kode hitam yang rapi.
-* Langkah-langkah yang berupa urutan saya ubah menjadi format daftar (angka `1.`, `2.`, dan *bullet points* `*`).
-* Bagian "Note" di bagian akhir saya buat miring (*italic*) agar terlihat seperti catatan peringatan yang rapi di GitHub.
