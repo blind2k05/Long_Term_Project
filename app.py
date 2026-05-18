@@ -5,79 +5,83 @@ import config
 import ollama
 import os
 import subprocess
-import shutil  
+import shutil
+from groq import Groq
+import ingest
 
-# Buat folder jika belum ada
 os.makedirs(os.path.join("vault", "data", "raw"), exist_ok=True)
 
-# 1. Konfigurasi Halaman Web
 st.set_page_config(page_title="Second Brain AI", page_icon="🧠", layout="centered")
 
-# === SIDEBAR ===
-with st.sidebar:
-    st.header("📂 Tambah Catatan Baru")
-    st.write("Drag & Drop file ke sini untuk memasukkannya ke otak AI.")
-    
-    uploaded_file = st.file_uploader("Pilih file PDF, TXT, atau MD", type=["pdf", "txt", "md"])
-    
-    if uploaded_file is not None:
-        save_path = os.path.join("vault", "data", "raw", uploaded_file.name)
-        with open(save_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"✅ '{uploaded_file.name}' tersimpan!")
-        
-        if st.button("🧠 Proses Tambahan (Soft Update)"):
-            with st.spinner("Sedang memproses dokumen..."):
-                try:
-                    subprocess.run(["python", "ingest.py"], check=True)
-                    st.cache_resource.clear()
-                    st.success("Selesai diproses!")
-                except Exception as e:
-                    st.error(f"Terjadi kesalahan: {e}")
-
-    # --- FITUR BARU: TOMBOL HARD RESET OTOMATIS ---
-    st.divider() # Garis pembatas
-    st.header("🛠️ Troubleshooting")
-    st.caption("Gunakan tombol ini jika AI gagal membaca file baru (Terjadi bentrok/Windows Lock).")
-    
-    if st.button("🔴 Hard Reset & Bangun Ulang Memori"):
-        with st.spinner("Menghapus database lama dan memproses ulang seluruh data..."):
-            try:
-                # 1. Lepaskan "gembok" memori dari Streamlit
-                st.cache_resource.clear()
-                
-                # 2. Hapus folder chroma_db secara otomatis
-                if os.path.exists(config.CHROMA_PATH):
-                    shutil.rmtree(config.CHROMA_PATH, ignore_errors=True)
-                
-                # 3. Jalankan ulang ingest.py
-                subprocess.run(["python", "ingest.py"], check=True)
-                
-                st.success("Hard Reset Berhasil! Database AI sudah bersih dan sinkron.")
-                st.rerun() # Refresh halaman web otomatis
-            except Exception as e:
-                st.error(f"Gagal melakukan reset: {e}")
-# ===============================================
-
-st.title("🧠 My Second Brain")
-st.caption("Asisten AI Lokal dengan RAG. Berjalan 100% Offline tanpa internet.")
-
-# 2. Inisialisasi Database
 @st.cache_resource
 def load_database():
     client = chromadb.PersistentClient(path=config.CHROMA_PATH)
     embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=config.EMBEDDING_MODEL_NAME
     )
-    return client.get_collection(name="personal_kb", embedding_function=embed_fn)
+    return client.get_collection(name=config.COLLECTION_NAME, embedding_function=embed_fn)
 
 try:
     collection = load_database()
 except Exception as e:
-    st.warning("Database belum tersedia. Silakan klik 'Hard Reset' di menu sebelah kiri.")
+    st.warning("Database belum tersedia. Lakukan Hard Reset.")
     st.stop()
 
-# 3. Inisialisasi Memori Percakapan
+with st.sidebar:
+    st.header("⚙️ Pengaturan Mesin AI")
+    llm_mode = st.radio(
+        "Pilih Mode Operasi:",
+        ["🔒 Offline (Ollama - Gemma 2B)", "☁️ Online (Groq - Llama 3)"]
+    )
+    st.divider()
+    
+    st.header("📂 Tambah Catatan Baru")
+    # Ditambahkan ekstensi csv agar uploader menerima file tabular
+    uploaded_file = st.file_uploader("Pilih file PDF, TXT, MD, atau CSV", type=["pdf", "txt", "md", "csv"], key="file_uploader_main")    
+    if uploaded_file is not None:
+        save_path = os.path.join("vault", "data", "raw", uploaded_file.name)
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        with st.spinner("Menyerap dokumen baru otomatis..."):
+            try:
+                ingest.main(existing_collection=collection) 
+                st.success(f"✅ '{uploaded_file.name}' terserap ke memori!")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+    st.divider()
+    st.header("🛠️ Manajemen Database")
+    
+    # Tombol dengan Key unik agar tidak terjadi error duplicate ID
+    if st.button("🔄 Sinkronkan Data (Update)", key="btn_sync_data"):
+        with st.spinner("Membaca perubahan file terbaru..."):
+            try:
+                ingest.main(existing_collection=collection)
+                st.success("Memori berhasil diperbarui!")
+            except Exception as e:
+                st.error(f"Gagal sinkronisasi: {e}")
+
+    if st.button("🔴 Hard Reset Database", key="btn_hard_reset"):
+        with st.spinner("Meremove dan rebuild database..."):
+            try:
+                st.cache_resource.clear()
+                if os.path.exists(config.CHROMA_PATH):
+                    shutil.rmtree(config.CHROMA_PATH, ignore_errors=True)
+                subprocess.run(["python", "ingest.py"], check=True)
+                st.success("Hard Reset Berhasil!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Gagal reset: {e}")
+
+    st.divider()
+    if st.button("🗑️ Hapus Obrolan", key="btn_clear_chat"):
+        st.session_state.chat_history = []
+        st.rerun()
+
+st.title("🧠 My Second Brain")
+st.caption("Asisten AI Cerdas dengan dukungan Hybrid RAG (Offline/Online).")
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -85,8 +89,7 @@ for message in st.session_state.chat_history:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. Kotak Input Pengguna
-user_query = st.chat_input("Tanyakan sesuatu tentang catatanmu...")
+user_query = st.chat_input("Tanyakan sesuatu...")
 
 if user_query:
     with st.chat_message("user"):
@@ -94,56 +97,126 @@ if user_query:
 
     results = collection.query(
         query_texts=[user_query],
-        n_results=config.TOP_K
+        n_results=config.TOP_K,
+        include=["documents", "distances", "metadatas"]
     )
 
     context_text = ""
-    if results['documents'] and len(results['documents']) > 0 and len(results['documents'][0]) > 0:
-        for i in range(len(results['documents'][0])):
-            score = results['distances'][0][i]
-            text = results['documents'][0][i]
+    unique_sources = set()
+    display_context_ui = "" 
+    
+    # FILTER KEWARASAN (Hanya ambil dokumen dengan skor di atas 45%)
+    MIN_SCORE = 0.45 
+    docs = []
+    distances = []
+    metas = []
 
-            if score < 0.8:
-                context_text += f"- {text}\n"
+    if results['documents'] and len(results['documents'][0]) > 0:
+        raw_docs = results['documents'][0]
+        raw_distances = results['distances'][0]
+        raw_metas = results['metadatas'][0] if results['metadatas'] else []
 
-    # 5. Proses Berpikir AI
+        for i in range(len(raw_docs)):
+            similarity_score = 1 - raw_distances[i]
+            if similarity_score >= MIN_SCORE:
+                docs.append(raw_docs[i])
+                distances.append(raw_distances[i])
+                metas.append(raw_metas[i])
+
+    # Looping menggunakan dokumen yang sudah lolos filter
+    for i in range(len(docs)):
+        source = metas[i].get('source', 'Tidak diketahui') if i < len(metas) else 'Tidak diketahui'
+        category = metas[i].get('category', 'Umum') if i < len(metas) else 'Umum'
+        unique_sources.add(source)
+        
+        score_percentage = (1 - distances[i]) * 100
+        
+        context_text += f"- [Sumber: {source}]\n{docs[i]}\n\n"
+        display_context_ui += f"**Dokumen {i+1}** (Skor: `{score_percentage:.2f}%` | Folder: `{category}` | File: `{source}`)\n> {docs[i]}\n\n---\n"
+
+    with st.expander("🔍 Intip Dokumen & Skor Relevansi"):
+        st.markdown(display_context_ui if display_context_ui else "Tidak ada dokumen yang memenuhi batas relevansi (>45%).")
+
     if context_text == "":
-        ai_answer = "Maaf, informasi tidak ditemukan di dalam catatan."
+        with st.chat_message("assistant"):
+            st.markdown("Maaf, informasi tidak ditemukan di catatan.")
+        st.session_state.chat_history.append({"role": "user", "content": user_query})
+        st.session_state.chat_history.append({"role": "assistant", "content": "Maaf, informasi tidak ditemukan di catatan."})
     else:
-        system_instruction = f"""Anda adalah asisten AI Second Brain. Tugas satu-satunya Anda adalah mengekstrak informasi dari teks KONTEKS yang diberikan, bukan dari pengetahuan umum Anda.
+        system_instruction = f"""Anda adalah asisten AI pengekstraksi fakta. 
+Tugas Anda HANYA menyampaikan informasi dari "Konteks Catatan" di bawah ini.
 
-Konteks dari database:
+Konteks Catatan:
 ---
 {context_text}
 ---
 
-ATURAN WAJIB (JIKA DILANGGAR ANDA AKAN GAGAL):
-1. Baca pertanyaan pengguna.
-2. Cari jawabannya HANYA di dalam teks Konteks di atas.
-3. JIKA Konteks di atas TIDAK MEMBAHAS atau TIDAK RELEVAN dengan pertanyaan pengguna (misalnya konteks membahas gulat, tapi pengguna bertanya tentang biologi/tokoh lain), Anda WAJIB menjawab dengan satu kalimat ini saja: "Maaf, informasi tidak ditemukan di dalam catatan."
-4. DILARANG KERAS memberikan jawaban tebakan, mengarang fakta, atau melanjutkan cerita di luar apa yang tertulis di Konteks.
+ATURAN MUTLAK (WAJIB DIPATUHI):
+1. LANGSUNG KE INTI: Dilarang keras berbasa-basi, menyapa, atau menggunakan frasa seperti "Wah seru banget" atau "Mari kita bahas".
+2. HILANGKAN KATA GANTI CATATAN: Jangan pernah berkata "Menurut catatan...", "Berdasarkan dokumen...", atau "Pengguna tertarik...". Langsung sampaikan faktanya seolah itu adalah jawaban mutlak.
+3. ANTI-HALUSINASI: Dilarang menambahkan fakta, sejarah, nama tokoh, atau nama perusahaan dari luar Konteks Catatan.
+4. JAWABAN KOSONG: Jika Konteks Catatan tidak membahas pertanyaan, Anda HANYA BOLEH menjawab persis dengan kalimat ini: "Maaf, informasi tersebut tidak ada di dalam catatan." Dilarang menambah kalimat apa pun setelahnya.
 """
 
         messages_to_send = [{'role': 'system', 'content': system_instruction}]
         messages_to_send.extend(st.session_state.chat_history)
         messages_to_send.append({'role': 'user', 'content': user_query})
 
-        try:
-            with st.spinner("AI sedang membaca catatan..."):
-                response = ollama.chat(
-                    model='gemma2:2b', 
-                    messages=messages_to_send,
-                    options={'temperature': 0.0}
-                )
-                ai_answer = response['message']['content']
-        except Exception as e:
-            ai_answer = f"Error Ollama: {e}"
+        with st.chat_message("assistant"):
+            try:
+                if "Offline" in llm_mode:
+                    def stream_ollama():
+                        response = ollama.chat(
+                            model='gemma2:2b', 
+                            messages=messages_to_send,
+                            options={'temperature': 0.0},
+                            stream=True
+                        )
+                        for chunk in response:
+                            yield chunk['message']['content']
+                    
+                    full_response = st.write_stream(stream_ollama)
 
-    with st.chat_message("assistant"):
-        st.markdown(ai_answer)
+                else:
+                    if not config.GROQ_API_KEY:
+                        full_response = st.markdown("Error: API Key Groq tidak ditemukan di .env.")
+                    else:
+                        client = Groq(api_key=config.GROQ_API_KEY)
+                        def stream_groq():
+                            chat_completion = client.chat.completions.create(
+                                messages=messages_to_send,
+                                model="llama-3.1-8b-instant", 
+                                temperature=0.0,
+                                stream=True
+                            )
+                            for chunk in chat_completion:
+                                if chunk.choices[0].delta.content is not None:
+                                    yield chunk.choices[0].delta.content
+                                    
+                        full_response = st.write_stream(stream_groq)
+                
+                # Logika Next Best Match
+                fallback_ui = ""
+                if "maaf" in full_response.lower() and "tidak ada" in full_response.lower():
+                    if len(docs) > 0:
+                        best_match_text = docs[0]
+                        best_match_score = (1 - distances[0]) * 100
+                        best_match_source = metas[0].get('source', 'Unknown')
+                        
+                        fallback_ui = f"\n\n💡 **Saran Sistem:** Meskipun tidak ada jawaban spesifik, ini adalah catatan terdekat yang ditemukan (Skor: `{best_match_score:.2f}%` dari `{best_match_source}`):\n> *\"{best_match_text.strip()}\"*"
+                        st.markdown(fallback_ui)
 
-    st.session_state.chat_history.append({"role": "user", "content": user_query})
-    st.session_state.chat_history.append({"role": "assistant", "content": ai_answer})
+                sources_str = f"\n\n---\n**📄 Referensi:** {', '.join(unique_sources)}"
+                st.markdown(sources_str)
+                
+                final_answer_to_save = full_response + fallback_ui + sources_str
 
-    if len(st.session_state.chat_history) > 6:
-        st.session_state.chat_history = st.session_state.chat_history[-6:]
+            except Exception as e:
+                st.error(f"Error: {e}")
+                final_answer_to_save = f"Error: {e}"
+
+        st.session_state.chat_history.append({"role": "user", "content": user_query})
+        st.session_state.chat_history.append({"role": "assistant", "content": final_answer_to_save})
+
+        if len(st.session_state.chat_history) > 6:
+            st.session_state.chat_history = st.session_state.chat_history[-6:]

@@ -1,12 +1,46 @@
-# Mengabaikan folder database ChromaDB
+# ==========================================
+# 1. DATABASE & MODEL AI (UKURAN BESAR)
+# ==========================================
 vault/chroma_db/
-
-# Mengabaikan folder model offline (sesuaikan dengan nama foldermu jika ada di dalam project)
 model_multilingual_offline/
 
-# Mengabaikan file hasil proses ingest yang bisa di-generate ulang
+# ==========================================
+# 2. FILE DATA HASIL PROSES
+# ==========================================
 vault/data/processed/cleaned_docs.jsonl
 
-# Mengabaikan cache Python
+# ==========================================
+# 3. PYTHON CACHE & VIRTUAL ENVIRONMENT
+# ==========================================
 __pycache__/
 *.pyc
+*.pyo
+venv/
+.venv/
+env/
+
+# ==========================================
+# 4. FILE RAHASIA (SECRETS)
+# ==========================================
+.env
+.env.*
+!.env.example 
+
+# ==========================================
+# 5. IDE & SYSTEM FILES
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# ==========================================
+# 6. PENGECUALIAN UNTUK GITHUB PUBLIC
+# ==========================================
+# Abaikan file eksperimen
+test_chunking.py
+
+# Abaikan SEMUA isi folder raw data...
+vault/data/raw/**/*
+
+# ...KECUALI file artikel laut dalam sebagai contoh untuk publik!
+!vault/data/raw/ekspedisi_laut_dalam.md

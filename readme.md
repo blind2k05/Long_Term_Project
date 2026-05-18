@@ -1,64 +1,88 @@
-## Explanation of the project
-Proyek **Second Brain** ini adalah asisten kecerdasan buatan berbasis RAG (*Retrieval-Augmented Generation*) yang berjalan **100% secara lokal (offline)**. Sistem ini dirancang untuk membaca, mengingat, dan menjawab pertanyaan berdasarkan catatan pribadi, jurnal harian, dan dokumen PDF pengguna. Proyek ini sangat menjaga privasi (Privacy-Preserving) dan tidak berbayar (Zero-Cost Inference) karena menggunakan model *embedding* lokal (Sentence-Transformers) dan LLM lokal (Gemma 2B via Ollama) tanpa mengirimkan data apa pun ke internet.
+# Second Brain: Hybrid RAG Assistant (Offline & Online)
 
-## Data sources
-Data mentah disimpan di dalam direktori `vault/data/raw/` yang terbagi menjadi beberapa kategori:
-- **Journal entries (X docs):** Berisi catatan harian dan minat pribadi, seperti *update* aktivitas *gaming* (Elden Ring, Monster Hunter) dan eksplorasi sejarah *pro-wrestling* (era NJPW Inoki Dark Ages).
-- **School notes (Y docs):** Berisi materi perkuliahan dan draf makalah, seperti catatan tentang algoritma *Reinforcement Learning* (perbandingan Thompson Sampling vs Epsilon-Greedy).
-- **Internship meetings (Z docs):** Berisi catatan teknis selama magang, seperti evaluasi model *Machine Learning* (implementasi XGBoost untuk Telco Churn).
-- **Coding notes (W docs):** Berisi dokumentasi rekayasa perangkat lunak, seperti logika *controller* dan transaksi database untuk sistem top-up game berbasis Laravel.
+## Explanation of the Project
+This **Second Brain** project is an advanced Retrieval-Augmented Generation (RAG)-based AI assistant. The system is designed to read, remember, and answer questions based on personal notes, daily journals, PDF documents, and **Tabular Data (CSV)**. 
 
-## Setup
-- **Python version:** Disarankan menggunakan Python 3.9 atau yang lebih baru.
-- **Persyaratan Sistem:**
-  1. Pastikan aplikasi [Ollama](https://ollama.com/) sudah terinstal dan berjalan di sistem operasi Anda.
-  2. Pastikan model bahasa sudah diunduh ke dalam Ollama dengan menjalankan: `ollama run gemma2:2b`.
-- **Instalasi:**
-  Jalankan perintah berikut di terminal untuk menginstal semua *library* yang dibutuhkan:
-  pip install -r requirements.txt
+This project features a **Dual-Engine Architecture**:
+1. **Privacy-Preserving Offline Mode:** Utilizes a local embedding model (`Sentence-Transformers`) and a local LLM (`Gemma 2B` via Ollama) for Zero-Cost Inference without sending any data to the internet.
+2. **High-Performance Online Mode:** Connects to `Llama 3.1 8B` via the Groq API for lightning-fast reasoning and handling complex queries.
 
-## Ingesting documents
+The system intelligently parses CSV files using a *Row-to-Text Stringification* technique, allowing small local models to answer tabular queries without needing to write or execute Python/Pandas code.
 
-**Cara menjalankan:**
-Pastikan Anda berada di root direktori proyek, lalu eksekusi perintah berikut di terminal:
-python ingest.py
-**Apa yang dilakukannya:**
-Skrip `ingest.py` berfungsi sebagai jalur penyerapan data (*data pipeline*). Proses yang terjadi di balik layar adalah:
-1. Membaca seluruh dokumen mentah (mendukung format `.md`, `.txt`, dan `.pdf`) yang berada di dalam folder `vault/data/raw/`.
-2. Memecah teks dari dokumen-dokumen tersebut menjadi potongan-potongan kecil (*chunking*) menggunakan `RecursiveCharacterTextSplitter` dari LangChain.
-3. Mengonversi teks menjadi representasi vektor matematis menggunakan model *embedding* (Sentence-Transformers).
-4. Menyimpan data vektor tersebut secara permanen ke dalam basis data vektor lokal (ChromaDB) yang terletak di direktori `vault/chroma_db/`.
+## Data Sources
+Raw data is stored in the `vault/data/raw/` directory, which supports `.pdf`, `.md`, `.txt`, and `.csv` formats. My current knowledge base includes:
+- **Journal entries:** Contains daily journals and personal interests, such as gaming updates and explorations of Japanese pro-wrestling history (e.g., NJPW Inoki Dark Ages).
+- **School notes:** Contains lecture materials and paper drafts, such as notes on machine learning algorithms and university projects.
+- **Internship & Operational Data:** Contains technical notes, RAG architecture documentation, and tabular `.csv` datasets (e.g., Telkomsel network site data and XGBoost churn prediction evaluation).
 
-## Searching
-
-- **Cara menjalankan `search.py`:**
-python search.py
-- **Example query + output:**
-Apa keunggulan Thompson Sampling?
-
-AI: Berdasarkan catatan, Thompson Sampling unggul karena dapat secara dinamis menyesuaikan probabilitas keberhasilan berdasarkan reward yang diperbarui secara real-time. Hal ini membuatnya lebih cerdas dalam meminimalkan regret dibandingkan dengan metode Epsilon-Greedy.
+## Core Features (Streamlit Web UI)
+This system comes with an interactive Graphical User Interface (UI) that runs directly in your browser.
+- **Dual Model Toggle:** Switch seamlessly between Offline (Gemma 2B) and Online (Llama 3) models.
+- **Multi-Format Upload:** Add PDF, TXT, MD, or CSV files directly from the sidebar. The system automatically ingests them into the vector space.
+- **Relevancy Threshold (Sanity Filter):** The system strictly drops retrieved documents with a similarity score below **45%**, preventing AI hallucinations.
+- **Next Best Match (Fallback):** If the answer is not found, the AI explicitly states it, but intelligently suggests the closest matching note available.
+- **Document X-Ray (Peek):** A debugging feature to transparently see the exact text, source file, and similarity score the AI pulls from the database.
+- **1-Click Database Management:** Sync or Hard Reset the ChromaDB vector database directly from the UI.
 
 ## Configuration
-Anda dapat mengubah pengaturan inti dari sistem pencarian dan pemrosesan teks di dalam file `config.py`:
+You can change the core settings of the search and text processing system in the `config.py` file:
+- **`CHUNK_SIZE`**: Determines the maximum number of characters in a single text chunk.
+- **`CHUNK_OVERLAP`**: Determines the number of overlapping characters between two consecutive text chunks to preserve context.
+- **`TOP_K`**: Determines the number of top relevant reference documents to be extracted from ChromaDB.
+- **`EMBEDDING_MODEL_NAME`**: Defines the embedding model used (default: `BAAI/bge-m3`).
 
-- **`CHUNK_SIZE`**: Menentukan batas jumlah maksimal karakter dalam satu potongan teks (chunk). Ukuran yang pas memastikan AI tidak menerima terlalu banyak atau terlalu sedikit konteks bacaan sekaligus.
-- **`CHUNK_OVERLAP`**: Menentukan jumlah karakter yang diulang atau tumpang-tindih (overlap) di antara dua teks yang terpotong. Hal ini berfungsi sebagai "jembatan" agar tidak ada kalimat atau makna yang terputus secara mendadak.
-- **`TOP_K`**: Menentukan jumlah dokumen referensi teratas yang paling relevan yang akan diekstrak dari ChromaDB dan diberikan kepada AI sebagai dasar untuk menjawab pertanyaan.
-- **`EMBEDDING_MODEL_NAME`**: Menentukan model *embedding* yang digunakan (bisa diatur menggunakan *path* folder model lokal untuk mode 100% *offline* atau nama model dari HuggingFace).
+---
 
-## Troubleshooting & Kapan Harus Menjalankan Ingest Ulang
+## Troubleshooting & Manual Ingestion
+The vector database synchronizes automatically via the Web UI. However, you can manually manage it via CLI. The `ingest.py` script acts as the data pipeline and ONLY needs to be executed manually if a massive batch of new files is added or if chunking parameters change.
 
-Sistem database vektor tidak diperbarui secara otomatis. Anda **TIDAK PERLU** menjalankan `ingest.py` setiap kali ingin bertanya kepada AI. Skrip `ingest.py` HANYA perlu dijalankan apabila terjadi salah satu dari 4 skenario berikut:
+**Error Solution: AI Fails to Find Context / Empty Results**
+If you experience *vector collision* (differing matrix dimensions due to model or chunking changes), perform a **Hard Reset**:
+1. Click the **"🔴 Hard Reset Database"** button in the Streamlit Sidebar.
+2. Alternatively, manually delete the `vault/chroma_db/` folder and run `python ingest.py` in the terminal.
 
-1. **Ada penambahan file dokumen baru** (PDF/MD/TXT) ke dalam folder `vault/data/raw/`.
-2. **Ada pengeditan/perubahan isi teks** pada dokumen lama yang sudah ada.
-3. **Mengubah parameter `CHUNK_SIZE` atau `CHUNK_OVERLAP`** di dalam `config.py`.
-4. **Mengubah model *embedding*** (berpindah dari model *online* ke *offline*, atau sebaliknya).
+---
 
-**Solusi Error: AI Gagal Menemukan Konteks / Hasil Kosong**
-Jika Anda bertanya tentang suatu hal yang pasti ada di dalam catatan, tetapi AI menjawab *"Maaf, informasi tidak ditemukan"*, kemungkinan besar terjadi *bentrokan vektor* (dimensi matriks berbeda karena perubahan model atau *chunking*). 
+## 🚀 Quickstart Guide (Step-by-Step)
 
-**Cara Mengatasinya (Hard Reset):**
-1. Buka *File Explorer*, cari dan **HAPUS** folder `vault/chroma_db` secara manual beserta seluruh isinya.
-2. Buka terminal, lalu jalankan ulang perintah `python ingest.py`.
-3. Tunggu hingga proses penyerapan selesai. Database Anda kini sudah kembali bersih dan disinkronkan dengan konfigurasi terbaru.
+Follow these steps to run the Second Brain on your local machine:
+
+**Step 1: System Requirements**
+Ensure you have the following installed on your operating system:
+* [Python 3.9+](https://www.python.org/downloads/)
+* [Ollama](https://ollama.com/) (Required for Offline Mode)
+
+**Step 2: Clone the Repository & Install Dependencies**
+Open your terminal (or VS Code terminal) and run:
+```bash
+git clone <your-repository-url>
+cd <your-repository-folder>
+pip install -r requirements.txt
+**Step 3: Setup the Local AI Brain (Gemma 2B)**
+Download the offline language model into Ollama by running this command in your terminal:
+```bash
+ollama pull gemma2:2b
+**Step 4: Setup the Online AI Brain (Groq API)(if you want to use better model)**
+
+Rename the env.example file to .env.
+
+Open the .env file and insert your Groq API Key:
+
+GROQ_API_KEY=your_actual_api_key_here
+**Step 5: Run the Application**
+Launch the Streamlit Web UI by executing:
+streamlit run app.py || python -m streamlit run app.py
+**Step 6: Initialize the Database**
+Upon first launch, the database will be empty.
+
+Use the sidebar to upload your first document/CSV, OR
+
+Click the "🔄 Sinkronkan Data (Update)" button to ingest existing files from the vault/data/raw/ folder.
+
+Note: The system will automatically download the BGE-M3 embedding model in the background during the first ingestion. Please ensure you have an active internet connection for this initial setup.
+
+
+**Penjelasan Perubahan:**
+* Tulisan "Bash" dan "Code snippet" yang sebelumnya ikut tersalin sudah saya hapus dan ganti dengan *backticks* (` ```bash ` dan ` ```env `) agar menjadi kotak kode hitam yang rapi.
+* Langkah-langkah yang berupa urutan saya ubah menjadi format daftar (angka `1.`, `2.`, dan *bullet points* `*`).
+* Bagian "Note" di bagian akhir saya buat miring (*italic*) agar terlihat seperti catatan peringatan yang rapi di GitHub.

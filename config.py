@@ -1,21 +1,23 @@
 import os
+from dotenv import load_dotenv
 
-# Konfigurasi Path Folder
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 BASE_DIR = "vault"
 DATA_DIR = os.path.join(BASE_DIR, "data")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_FILE = os.path.join(DATA_DIR, "processed", "cleaned_docs.jsonl")
 CHROMA_PATH = os.path.join(BASE_DIR, "chroma_db")
 
-# Pengaturan Model Embedding
-# EMBEDDING_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+COLLECTION_NAME = "personal_kb"
 
-# penggunaan offline
-EMBEDDING_MODEL_NAME = r"D:\Magang\LLM\model_multilingual_offline"
-# Parameter RAG
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
-TOP_K = 3
+# EMBEDDING_MODEL_NAME = os.environ.get("EMBEDDING_MODEL_NAME", "BAAI/bge-m3")
+EMBEDDING_MODEL_NAME = r"D:\Magang\LLM\models\bge-m3"
 
-# Kategori Data
+CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 200))
+TOP_K = int(os.environ.get("TOP_K", 6))
+
 CATEGORIES = ["journal", "school_notes", "coding_notes", "internship_meetings"]
