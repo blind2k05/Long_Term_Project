@@ -44,3 +44,6 @@ vault/data/raw/**/*
 
 # ...KECUALI file artikel laut dalam sebagai contoh untuk publik!
 !vault/data/raw/ekspedisi_laut_dalam.md
+!vault/data/raw/Kompilasi_Pengetahuan_Acak.pdf
+!vault/data/raw/Arsip_Eksperimen_Data_Berbeda.txt
+!vault/data/raw/sample_site_data.csv

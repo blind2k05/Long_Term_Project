@@ -1,0 +1,62 @@
+ARSIP DATA EKSPERIMEN: MULTI-AXIS SCORING & ANALISIS MULTIKOLINEARITAS
+========================================================================
+Jenis Data: Dataset Validasi dan Matriks Korelasi (Fiktif / Non-Sensitif)
+Tujuan: Pengujian Stress-Test Modul Parsing RAG & Batas Relevansi (Sanity Filter)
+Tanggal Pembuatan: 19 Mei 2026
+
+------------------------------------------------------------------------
+1. TEORI MODEL: ISU MULTIKOLINEARITAS PADA MODEL PREDIKTIF
+------------------------------------------------------------------------
+Multikolinearitas terjadi ketika dua atau lebih variabel independen dalam model regresi linear atau beberapa model berbasis pohon (tree-based) memiliki korelasi linear yang sangat kuat. Hal ini menjadi masalah serius karena dapat menyebabkan varians koefisien model menjadi sangat besar, membuat estimasi parameter menjadi tidak stabil, dan menyulitkan sistem untuk mengisolasi pengaruh independen dari masing-masing fitur.
+
+Dalam pengembangan model prediktif (seperti penentuan perilaku pelanggan atau analisis data performa perangkat), multikolinearitas sering kali dipicu oleh penggunaan fitur yang menangkap informasi mendasar yang sama dari sudut pandang yang hampir identik. Cara mendeteksinya adalah dengan memeriksa nilai Variance Inflation Factor (VIF) atau menggunakan matriks korelasi Pearson. Nilai VIF di atas 5 atau 10 umumnya mengindikasikan adanya kendala kolinearitas yang harus ditangani melalui reduksi dimensi (PCA) atau eliminasi fitur secara manual.
+
+------------------------------------------------------------------------
+2. MATRIKS KORELASI PEARSON (TABULAR PARSING TEST)
+------------------------------------------------------------------------
+Format di bawah ini disusun dalam bentuk matriks segitiga untuk menguji ketangguhan LLM lokal (seperti Gemma 2B) dalam memahami hubungan baris-kolom tanpa bantuan pustaka visual:
+
+Variabel        | Fitur_A  | Fitur_B  | Fitur_C  | Fitur_D  | Label_Target
+------------------------------------------------------------------------
+Fitur_A         |  1.00    |  0.89    |  0.12    | -0.05    |  0.64
+Fitur_B         |  0.89    |  1.00    |  0.15    | -0.02    |  0.58
+Fitur_C         |  0.12    |  0.15    |  1.00    |  0.45    |  0.21
+Fitur_D         | -0.05    | -0.02    |  0.45    |  1.00    | -0.11
+Label_Target    |  0.64    |  0.58    |  0.21    | -0.11    |  1.00
+
+Catatan Pengujian RAG: 
+Fitur_A dan Fitur_B menunjukkan indikasi korelasi yang sangat tinggi (0.89). Jika sistem RAG Anda berhasil menarik paragraf ini, LLM harus mampu menyimpulkan bahwa salah satu dari Fitur_A atau Fitur_B berpotensi menciptakan gejala data leakage atau redundansi informasi.
+
+------------------------------------------------------------------------
+3. KRITERIA MULTI-AXIS SCORING UNTUK OPTIMALISASI INFRASTRUKTUR JARINGAN
+------------------------------------------------------------------------
+Berikut adalah kerangka kerja penilaian multi-sumbu yang digunakan untuk mengevaluasi efisiensi alokasi spektrum frekuensi radio pada titik simpul nirkabel urban:
+
+Aksis 1: Efisiensi Spektral (Spectral Efficiency)
+- Bobot Penilaian: 40%
+- Metrik Utama: Bits per Second per Hertz (bps/Hz).
+- Batas Kelulusan: > 4.5 bps/Hz untuk kondisi beban puncak (peak load).
+
+Aksis 2: Latensi Propagasi Ujung-ke-Ujung (End-to-End Latency)
+- Bobot Penilaian: 35%
+- Metrik Utama: Milliseconds (ms).
+- Batas Kelulusan: < 20 ms untuk paket data prioritas tinggi (Voice over NR / VoNR).
+
+Aksis 3: Densitas Pengguna Aktif per Kilometer Persegi
+- Bobot Penilaian: 25%
+- Metrik Utama: Jumlah perangkat aktif terdaftar bersamaan (simultaneous active UEs).
+- Batas Kelulusan: > 1.200 perangkat tanpa terjadi degradasi throughput di bawah 2 Mbps.
+
+------------------------------------------------------------------------
+4. LOG PENGUJIAN BEBAN REAKTOR PIROLISIS (SAMPEL DATA ENERGI TERBARUKAN)
+------------------------------------------------------------------------
+Log parameter di bawah ini mencatat perilaku termal generator selama konversi biomassa padat menjadi bio-oil cair:
+
+- ID Aktivitas: PYL-B-2026-05
+- Tekanan Internal: Konstans pada 1.2 Bar (Atmosfer Nitrogen)
+- Kondisi Kondensor: Suhu air pendingin dijaga ketat pada 4 derajat Celsius
+
+[Log Kronologis Sensor Termal]
+- Jam 08:00 WIB -> Suhu Zona 1: 210 C | Suhu Zona 2: 320 C | Indikator Fluks: Normal. Catatan: Penguapan kandungan lignin dimulai.
+- Jam 09:00 WIB -> Suhu Zona 1: 430 C | Suhu Zona 2: 510 C | Indikator Fluks: Berfluktuasi. Catatan: Dekomposisi fraksi selulosa mencapai titik puncak. Tar cair mulai menetes ke wadah penampung.
+- Jam 10:00 WIB -> Suhu Zona 1: 550 C | Suhu Zona 2: 580 C | Indikator Fluks: Stabil Rendah. Catatan: Proses konversi selesai. Residu arang karbonisasi mulai mengendap di dasar reaktor.

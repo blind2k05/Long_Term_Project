@@ -1,0 +1,11 @@
+site_id,site_name,region,rat,status,capacity_gbps
+xyz873,BTS Merdeka Jaya,Jakarta,4G LTE,Active,1.2
+xce938,BTS Sudirman Central,Jakarta,5G NR,Active,10.0
+jkt102,BTS Gatot Subroto,Jakarta,4G LTE,Maintenance,0.8
+bnd045,BTS Dago Permai,Bandung,4G LTE,Active,1.5
+mdn882,BTS Deli Utama,Medan,3G WCDMA,Decommissioned,0.2
+sby301,BTS Tunjungan,Surabaya,5G NR,Active,12.5
+mks441,BTS Losari Beach,Makassar,4G LTE,Active,1.1
+bpp092,BTS Balikpapan Hub,Balikpapan,4G LTE,Active,2.0
+pbi110,BTS Pecatu Indah,Bali,5G NR,Active,8.5
+tgr553,BTS Serpong Town,Tangerang,4G LTE,Active,2.5
