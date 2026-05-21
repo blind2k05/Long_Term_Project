@@ -13,8 +13,12 @@ CHROMA_PATH = os.path.join(BASE_DIR, "chroma_db")
 
 COLLECTION_NAME = "personal_kb"
 
+<<<<<<< HEAD
 # EMBEDDING_MODEL_NAME = os.environ.get("EMBEDDING_MODEL_NAME", "BAAI/bge-m3")
 EMBEDDING_MODEL_NAME = r"D:\Magang\LLM\models\bge-m3"
+=======
+EMBEDDING_MODEL_NAME = os.environ.get("EMBEDDING_MODEL_NAME", "BAAI/bge-m3")
+>>>>>>> c8f35223bf4e49989566a1650ca98020fe5e1312
 
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", 200))
