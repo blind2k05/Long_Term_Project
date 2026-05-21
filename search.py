@@ -39,16 +39,26 @@ def main():
         
         if results['documents'] and len(results['documents'][0]) > 0:
             print("\n🔍 [DEBUG] Hasil Tarikan Database:")
-            docs = results['documents'][0]
-            distances = results['distances'][0]
-            metas = results['metadatas'][0] if results['metadatas'] else []
+            raw_docs = results['documents'][0]
+            raw_distances = results['distances'][0]
+            raw_metas = results['metadatas'][0] if results['metadatas'] else []
 
+            # FILTER KEWARASAN (Sama seperti di app.py)
+            for i in range(len(raw_docs)):
+                similarity_score = 1 - raw_distances[i]
+                if similarity_score >= config.MIN_SCORE:
+                    docs.append(raw_docs[i])
+                    distances.append(raw_distances[i])
+                    metas.append(raw_metas[i])
+
+            if len(docs) == 0:
+                print("   ➜ [Peringatan] Ada dokumen ditemukan, namun skor relevansinya di bawah batas wajar.")
+            
             for i in range(len(docs)):
-                similarity_score = 1 - distances[i]
-                score_percentage = similarity_score * 100
+                score_percentage = (1 - distances[i]) * 100
                 source = metas[i].get('source', 'Unknown') if i < len(metas) else 'Unknown'
                 
-                print(f"   ➜ [Skor Relevansi: {score_percentage:.2f}%] Sumber: {source}")
+                print(f"   ➜ [Skor Relevansi: {score_percentage:.2f}%] Sumber: {source}")
                 context_text += f"- [Sumber: {source}] \n{docs[i]}\n\n"
 
         if context_text == "":
@@ -74,7 +84,7 @@ Konteks:
             print("\nAI: ", end="", flush=True)
             
             response = ollama.chat(
-                model='gemma2:2b', 
+                model=config.OFFLINE_LLM_MODEL, 
                 messages=messages_to_send,
                 options={'temperature': 0.0},
                 stream=True 
@@ -94,8 +104,8 @@ Konteks:
                     best_match_source = metas[0].get('source', 'Unknown')
                     
                     print(f"\n💡 [Saran Sistem]: Meskipun tidak ada jawaban spesifik untuk pertanyaan Anda, ini adalah catatan dengan topik terdekat yang saya temukan:")
-                    print(f"   (Skor Relevansi: {best_match_score:.2f}% | Dokumen: {best_match_source})")
-                    print(f"   \"{best_match_text.strip()}\"")
+                    print(f"   (Skor Relevansi: {best_match_score:.2f}% | Dokumen: {best_match_source})")
+                    print(f"   \"{best_match_text.strip()}\"")
 
             chat_history.append({'role': 'user', 'content': user_query})
             chat_history.append({'role': 'assistant', 'content': ai_answer})

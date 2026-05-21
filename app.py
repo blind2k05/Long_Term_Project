@@ -36,8 +36,7 @@ with st.sidebar:
     st.divider()
     
     st.header("📂 Tambah Catatan Baru")
-    # Ditambahkan ekstensi csv agar uploader menerima file tabular
-    uploaded_file = st.file_uploader("Pilih file PDF, TXT, MD, atau CSV", type=["pdf", "txt", "md", "csv"], key="file_uploader_main")    
+    uploaded_file = st.file_uploader("Pilih file PDF, TXT, MD, atau CSV", type=["pdf", "txt", "md", "csv"], key="file_uploader_main")
     if uploaded_file is not None:
         save_path = os.path.join("vault", "data", "raw", uploaded_file.name)
         with open(save_path, "wb") as f:
@@ -53,7 +52,6 @@ with st.sidebar:
     st.divider()
     st.header("🛠️ Manajemen Database")
     
-    # Tombol dengan Key unik agar tidak terjadi error duplicate ID
     if st.button("🔄 Sinkronkan Data (Update)", key="btn_sync_data"):
         with st.spinner("Membaca perubahan file terbaru..."):
             try:
@@ -61,7 +59,7 @@ with st.sidebar:
                 st.success("Memori berhasil diperbarui!")
             except Exception as e:
                 st.error(f"Gagal sinkronisasi: {e}")
-
+    
     if st.button("🔴 Hard Reset Database", key="btn_hard_reset"):
         with st.spinner("Meremove dan rebuild database..."):
             try:
@@ -105,8 +103,6 @@ if user_query:
     unique_sources = set()
     display_context_ui = "" 
     
-    # FILTER KEWARASAN (Hanya ambil dokumen dengan skor di atas 45%)
-    MIN_SCORE = 0.45 
     docs = []
     distances = []
     metas = []
@@ -118,12 +114,11 @@ if user_query:
 
         for i in range(len(raw_docs)):
             similarity_score = 1 - raw_distances[i]
-            if similarity_score >= MIN_SCORE:
+            if similarity_score >= config.MIN_SCORE:
                 docs.append(raw_docs[i])
                 distances.append(raw_distances[i])
                 metas.append(raw_metas[i])
 
-    # Looping menggunakan dokumen yang sudah lolos filter
     for i in range(len(docs)):
         source = metas[i].get('source', 'Tidak diketahui') if i < len(metas) else 'Tidak diketahui'
         category = metas[i].get('category', 'Umum') if i < len(metas) else 'Umum'
@@ -167,7 +162,7 @@ ATURAN MUTLAK (WAJIB DIPATUHI):
                 if "Offline" in llm_mode:
                     def stream_ollama():
                         response = ollama.chat(
-                            model='gemma2:2b', 
+                            model=config.OFFLINE_LLM_MODEL, 
                             messages=messages_to_send,
                             options={'temperature': 0.0},
                             stream=True
@@ -185,7 +180,7 @@ ATURAN MUTLAK (WAJIB DIPATUHI):
                         def stream_groq():
                             chat_completion = client.chat.completions.create(
                                 messages=messages_to_send,
-                                model="llama-3.1-8b-instant", 
+                                model=config.ONLINE_LLM_MODEL, 
                                 temperature=0.0,
                                 stream=True
                             )
@@ -195,7 +190,6 @@ ATURAN MUTLAK (WAJIB DIPATUHI):
                                     
                         full_response = st.write_stream(stream_groq)
                 
-                # Logika Next Best Match
                 fallback_ui = ""
                 if "maaf" in full_response.lower() and "tidak ada" in full_response.lower():
                     if len(docs) > 0:
